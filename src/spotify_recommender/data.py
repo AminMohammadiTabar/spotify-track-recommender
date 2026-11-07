@@ -29,14 +29,14 @@ def download_dataset(destination: Path = RAW_DATA_PATH) -> Path:
         import kagglehub
     except ImportError as exc:
         raise RuntimeError(
-            "kagglehub نصب نیست. ابتدا `pip install kagglehub` را اجرا کن."
+            "kagglehub is not installed. Please run `pip install kagglehub` first."
         ) from exc
 
     downloaded_dir = Path(kagglehub.dataset_download(DATASET_SLUG))
     csv_files = list(downloaded_dir.rglob("*.csv"))
     if not csv_files:
         raise FileNotFoundError(
-            f"هیچ فایل CSV در مسیر دانلودشده پیدا نشد: {downloaded_dir}"
+            f"No CSV file found in downloaded directory: {downloaded_dir}"
         )
 
     # The dataset is expected to contain one main CSV; choosing the largest
@@ -63,7 +63,7 @@ def load_tracks(csv_path: Path | str | None = None) -> pd.DataFrame:
 
     if not csv_path.exists():
         raise FileNotFoundError(
-            f"فایل دیتاست پیدا نشد: {csv_path}. ابتدا دستور download را اجرا کن یا فایل را در data/raw قرار بده."
+            f"Dataset file not found: {csv_path}. Run the download command or place dataset.csv in data/raw."
         )
 
     df = pd.read_csv(csv_path)
@@ -84,7 +84,7 @@ def load_tracks(csv_path: Path | str | None = None) -> pd.DataFrame:
     missing = sorted(REQUIRED_COLUMNS.difference(df.columns))
     if missing:
         raise ValueError(
-            "ستون‌های موردنیاز در CSV وجود ندارند: " + ", ".join(missing)
+            "Missing required columns in CSV: " + ", ".join(missing)
         )
 
     return df

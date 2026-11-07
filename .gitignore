@@ -1,15 +1,24 @@
+# Environments and dependencies
 .venv/
+env/
+venv/
+
+# Python byte-code and caches
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ipynb_checkpoints/
 .env
+
+# Raw and processed datasets (kept local, not in Git)
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+
+# Trained models and heavy serialized artifacts (kept local / cloud storage)
 models/*
 !models/.gitkeep
-reports/*
-!reports/.gitkeep
 *.joblib
+*.pkl
+

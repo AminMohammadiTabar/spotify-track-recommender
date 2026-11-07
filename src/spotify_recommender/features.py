@@ -19,7 +19,7 @@ def build_feature_frame(df: pd.DataFrame) -> pd.DataFrame:
 
     missing = [column for column in FEATURE_COLUMNS if column not in df_copy.columns]
     if missing:
-        raise ValueError(f"ستون‌های feature موجود نیستند: {missing}")
+        raise ValueError(f"Missing required feature columns: {missing}")
 
     X = df_copy[FEATURE_COLUMNS].copy()
 
@@ -40,9 +40,9 @@ def validate_training_frame(df: pd.DataFrame) -> pd.DataFrame:
     elif "track_genre" in df.columns:
         clean = df.dropna(subset=["track_genre"]).copy()
     else:
-        raise ValueError("حداقل یکی از ستون‌های track_genre یا genres برای آموزش لازم است.")
+        raise ValueError("At least one target column ('track_genre' or 'genres') is required for training.")
 
     if clean.empty:
-        raise ValueError("بعد از حذف ردیف‌های بدون ژانر، داده‌ای باقی نمانده است.")
+        raise ValueError("No valid rows remaining after filtering out missing genres.")
 
     return clean.reset_index(drop=True)

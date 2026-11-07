@@ -1,4 +1,4 @@
-.PHONY: install download train test
+.PHONY: install download prepare inspect train test
 
 install:
 	pip install -r requirements.txt
@@ -7,8 +7,15 @@ install:
 download:
 	python -m spotify_recommender.cli download
 
+prepare:
+	python -m spotify_recommender.cli prepare
+
+inspect:
+	python -m spotify_recommender.cli inspect
+
 train:
 	python -m spotify_recommender.cli train
 
 test:
 	pytest
+
