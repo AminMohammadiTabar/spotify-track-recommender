@@ -10,6 +10,10 @@ __pycache__/
 .ipynb_checkpoints/
 .env
 .agents
+.vscode/
+*.egg-info/
+build/
+dist/
 
 # Raw and processed datasets (kept local, not in Git)
 data/raw/*

@@ -12,25 +12,30 @@ A similarity-based music recommendation system using the **Spotify Tracks Datase
 spotify_track_recommender/
 ├── data/
 │   ├── raw/                 # Raw Kaggle CSV dataset (ignored in Git)
-│   └── processed/           # Aggregated, deduplicated dataset (ignored in Git)
+│   └── processed/           # Processed datasets (ignored in Git)
+│       ├── tracks_aggregated.csv  # Lossless multi-genre aggregated tracks
+│       └── tracks_normalized.csv  # Text-normalized catalog with version tags
 ├── models/                  # Serialized models and leaf indices (ignored in Git)
 ├── notebooks/
 │   └── 01_eda_template.ipynb
 ├── reports/                 # Analysis reports and figures (tracked in Git)
-│   ├── feature_importance.md
-│   ├── feature_importance.png
-│   └── project_progress_report.md
+│   ├── duplicate_track_feature_analysis.md  # Deep dive on title+artist duplicates
+│   ├── feature_importance.md                # RF Gini feature importance ranking
+│   ├── feature_importance.png               # Visual plot of feature importances
+│   └── project_progress_report.md           # Engineering progress & milestone report
 ├── src/
 │   └── spotify_recommender/
 │       ├── __init__.py
 │       ├── config.py        # Configuration, paths, and feature definitions
 │       ├── data.py          # Data downloading, cleaning, and multi-genre aggregation
 │       ├── features.py      # Feature engineering and input validation
+│       ├── normalization.py # NFKC unicode, casefold, genre deduplication, version tagging
 │       ├── model.py         # Pipeline setup and Random Forest leaf extraction
 │       ├── recommender.py   # Similarity inference and recommendation engine
 │       └── cli.py           # Command-Line Interface
 ├── tests/
-│   └── test_features.py     # Automated unit tests
+│   ├── test_features.py     # Unit tests for feature extraction and aggregation
+│   └── test_normalization.py# Unit tests for text normalization and metadata preservation
 ├── .gitignore
 ├── Makefile
 ├── pyproject.toml
@@ -65,9 +70,9 @@ make install
 
 ---
 
-## 2. Dataset Setup & Preprocessing
+## 2. Dataset Setup & Preprocessing Pipeline
 
-### Download Dataset
+### Step A: Download Dataset
 Configure your Kaggle credentials, then run:
 
 ```bash
@@ -78,8 +83,8 @@ python -m spotify_recommender.cli download
 Dataset source: `maharshipandya/-spotify-tracks-dataset`.  
 The file is saved under `data/raw/` (automatically resolves `spotify_tracks.csv` or `dataset.csv`).
 
-### Data Preparation & Lossless Multi-Genre Aggregation
-Clean corrupted rows, extract the `is_remastered` feature, and aggregate multi-genre tracks by unique `track_id`:
+### Step B: Lossless Multi-Genre Aggregation
+Clean corrupted records, extract the `is_remastered` feature, and aggregate multi-genre tracks by unique `track_id`:
 
 ```bash
 python -m spotify_recommender.cli prepare
@@ -88,7 +93,21 @@ python -m spotify_recommender.cli prepare
 
 This generates `data/processed/tracks_aggregated.csv` containing **89,740 unique tracks** without data leakage or genre loss.
 
-### Inspect Dataset
+### Step C: Categorical Text Normalization & Version Extraction
+Apply Unicode NFKC normalization, casefolding (`casefold()`), whitespace collapsing, genre list deduplication, and version tag extraction while preserving original titles:
+
+```bash
+python -m spotify_recommender.cli normalize
+# or: make normalize
+```
+
+This generates `data/processed/tracks_normalized.csv`:
+* Preserves raw track, artist, and album names intact.
+* Preserves raw genre strings in `genres_raw`.
+* Stores deduplicated, sorted normalized genre lists in `genres` and `genres_str`.
+* Derives `version_tag` (`original`, `live`, `remix`, `remaster`, `deluxe`, `radio_edit`, `acoustic`, `instrumental`, `demo`) and `version_tags`.
+
+### Step D: Inspect Dataset
 View dataset summary, genre distributions, and cleaning statistics:
 
 ```bash
@@ -102,6 +121,7 @@ python -m spotify_recommender.cli inspect
 
 Detailed technical documentation and analytical reports are tracked in `reports/`:
 
+* **[Duplicate Track Feature Analysis](reports/duplicate_track_feature_analysis.md):** Comprehensive empirical analysis of 13,054 rows across 4,657 identical title + artist groups, multi-album root causes, duration variance distributions, acoustic divergence (live/acoustic/remix), and architectural recommendations against premature record merging.
 * **[Engineering Progress Report](reports/project_progress_report.md):** Complete summary of dataset profiling, missing value audits, 3-layer duplicate resolution, domain bounds validation, and feature engineering.
 * **[Feature Importance Analysis](reports/feature_importance.md):** Empirical Gini importance ranking and insights derived from 100 Random Forest decision trees across 114 genres.
 * **[Feature Importance Chart](reports/feature_importance.png):** High-resolution horizontal bar chart visualizing the top discriminators.
@@ -135,6 +155,7 @@ python -m spotify_recommender.cli recommend --track-id "SPOTIFY_TRACK_ID" --top-
 
 * **Continuous Audio Features (10):** `danceability`, `energy`, `loudness`, `speechiness`, `acousticness`, `instrumentalness`, `liveness`, `valence`, `tempo`, `duration_ms`
 * **Categorical Features (5):** `key` (pitch class 0-11), `mode` (major/minor), `time_signature`, `explicit`, `is_remastered`
+* **Metadata & Derived Tags:** `version_tag`, `version_tags`, `genres`, `genres_raw`
 * **Target / Grouping Labels:** `track_genre` / `genres`
 
 Identifiers, artist names, album titles, and popularity are strictly excluded from the model feature matrix to prevent data leakage and popularity bias.
@@ -149,5 +170,3 @@ Run the automated test suite with pytest:
 pytest
 # or: make test
 ```
-
-

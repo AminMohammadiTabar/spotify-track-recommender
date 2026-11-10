@@ -1,4 +1,12 @@
+import sys
+from pathlib import Path
 import pandas as pd
+
+# Support running directly via 'Run Python File'
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_SRC_DIR = _PROJECT_ROOT / "src"
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
 
 from spotify_recommender.features import build_feature_frame
 from spotify_recommender.config import FEATURE_COLUMNS
@@ -52,3 +60,8 @@ def test_prepare_aggregated_tracks_groups_multi_genres():
     assert song1["genres"] == ["pop", "rock"]
     assert song1["popularity"] == 75
     assert song1["genres_str"] == "pop; rock"
+
+
+if __name__ == "__main__":
+    import pytest
+    sys.exit(pytest.main([__file__, "-v"]))

@@ -1,10 +1,11 @@
 import argparse
 import json
-
 from pathlib import Path
-from .config import MODEL_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH
+import pandas as pd
+from .config import MODEL_PATH, PROCESSED_DATA_PATH, PROCESSED_NORMALIZED_PATH, RAW_DATA_PATH
 from .data import download_dataset, load_tracks, prepare_aggregated_tracks
 from .model import train_and_save
+from .normalization import normalize_file
 from .recommender import recommend_by_track_id
 
 
@@ -34,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
     recommend_parser.add_argument("--top-k", type=int, default=10)
     recommend_parser.add_argument("--model", default=str(MODEL_PATH))
 
+    normalize_parser = subparsers.add_parser(
+        "normalize", help="Apply text normalization and version extraction to aggregated dataset"
+    )
+    normalize_parser.add_argument("--input", default=str(PROCESSED_DATA_PATH))
+    normalize_parser.add_argument("--output", default=str(PROCESSED_NORMALIZED_PATH))
+
     inspect_parser = subparsers.add_parser(
         "inspect", help="Print a quick dataset summary"
     )
@@ -59,6 +66,15 @@ def main() -> None:
         print(f"Total unique tracks: {len(agg):,}")
         print(f"Multi-genre tracks: {(agg['genres'].apply(len) > 1).sum():,}")
         print(f"Remastered tracks: {agg['is_remastered'].sum():,}")
+
+    elif args.command == "normalize":
+        out_path = normalize_file(args.input, args.output)
+        norm_df = pd.read_csv(out_path)
+        print(f"Normalized dataset saved to: {out_path}")
+        print(f"Total tracks: {len(norm_df):,}")
+        print(f"Unique track IDs: {norm_df['track_id'].nunique():,}")
+        print("\nPrimary version distribution:")
+        print(norm_df['version_tag'].value_counts().to_string())
 
     elif args.command == "train":
         metrics = train_and_save(args.data, args.model)

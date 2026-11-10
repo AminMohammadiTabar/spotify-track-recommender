@@ -19,6 +19,7 @@ MODEL_PATH = MODEL_DIR / "random_forest_recommender.joblib"
 
 PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 PROCESSED_DATA_PATH = PROCESSED_DATA_DIR / "tracks_aggregated.csv"
+PROCESSED_NORMALIZED_PATH = PROCESSED_DATA_DIR / "tracks_normalized.csv"
 
 # Continuous audio features
 NUMERIC_FEATURES = [
