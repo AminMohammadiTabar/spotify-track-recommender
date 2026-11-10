@@ -9,6 +9,7 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 .env
+.agents
 
 # Raw and processed datasets (kept local, not in Git)
 data/raw/*
