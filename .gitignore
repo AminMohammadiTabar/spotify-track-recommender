@@ -20,6 +20,11 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+# Shared processed artifacts (needed to continue work on other machines)
+!data/processed/tracks_aggregated.csv
+!data/processed/tracks_normalized.csv
+!data/processed/split_assignments.csv
+!data/processed/split_genre_distribution.csv
 
 # Trained models and heavy serialized artifacts (kept local / cloud storage)
 models/*
