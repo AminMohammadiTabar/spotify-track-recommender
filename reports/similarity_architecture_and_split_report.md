@@ -11,12 +11,13 @@
 This report documents the second engineering phase of the **Spotify Track Recommender**: redefining the product goal, designing the multi-dimensional similarity architecture, and producing a leakage-safe Train / Validation / Test split of the normalized catalog.
 
 ### Key Outcomes:
-1. **Scope Reset:** The previous model implementation (Random Forest leaf proximity pipeline, its preprocessing, evaluation, and serialization) is retired. It imposes no constraints on the new design. The preprocessing layer (`data.py`, `normalization.py`) is retained as the data foundation.
+1. **Scope Reset:** All previous model and pipeline code is retired and imposes no constraints on the new design: `build_pipeline()`, `train_and_save()`, the Random Forest configuration, `SimpleImputer`, `OneHotEncoder`, the `ColumnTransformer` layout, the evaluation metrics, and the model save / load format. The preprocessing layer (`data.py`, `normalization.py`) is retained as the data foundation.
 2. **Product Goal:** Given a song, return the **10 most similar tracks**, where the user chooses *which aspects* of similarity matter (mood, rhythm, genre, …). Target is perceptual / musical similarity, not minimal raw numeric distance.
 3. **Feature Architecture V1:** Five independent **Similarity Dimensions** (Mood, Acoustic, Rhythm, Harmonic, Genre), each feature assigned to **exactly one** dimension. Content and metadata columns (`explicit`, `is_remastered`, `artists`, `popularity`, `duration_ms`) are separated into **Filters & Metadata** and never contribute to a similarity score. Encoded and validated in `src/spotify_recommender/feature_schema.py`.
 4. **Score Combination:** Weighted average over the user-selected dimensions. **V1 uses equal weights** (e.g., 3 dimensions → 33.3% each); later versions expose per-dimension sliders.
 5. **Data Split:** A **group-aware multi-label stratified** split (70 / 15 / 15) over **89,740 tracks** in **81,205 song groups**. Zero group leakage, all **114 genres present in every split**, mean per-genre share deviation **0.07%**.
-6. **Open Finding:** **188 audio-identical clusters (520 tracks, 0.58%)** still cross split boundaries because their titles differ (translated soundtrack titles, white-noise re-uploads). An audio-aware group extension is proposed (Section 7).
+6. **Reproducible Environment:** Python 3.13 virtual environment; all **25 automated tests pass**. Regenerating the processed data reproduced the earlier reports exactly.
+7. **Open Finding:** **188 audio-identical clusters (520 tracks, 0.58%)** still cross split boundaries because their titles differ (translated soundtrack titles, white-noise re-uploads). An audio-aware group extension is proposed (Section 7).
 
 ---
 
@@ -49,6 +50,8 @@ The user names a song; the system recommends the top-10 most similar tracks. Sim
 | **Harmonic** | `key`, `mode` | Tonal center and major / minor modality |
 | **Genre** | `genres` | Shared or closely related genres |
 
+Each feature belongs to **exactly one** dimension. In the earlier draft, `energy` and `acousticness` each appeared in two dimensions, which would have double counted them whenever both dimensions were selected.
+
 > **Note:** This categorization is a **design hypothesis** grounded in domain knowledge. It is revisited after the correlation analysis on the training split (Section 8).
 
 ### B) Statistical Feature Types
@@ -74,6 +77,10 @@ The type of each feature determines which correlation method and encoding apply 
 | `popularity` | Metadata / Optional Ranking | Controls popularity range; not a measure of musical similarity. |
 | `duration_ms` | Metadata only | Excluded from similarity by design decision. |
 | `version_tag` | Metadata (proposed) | Candidate for a future version filter (e.g., exclude live versions). |
+
+Artist and Popularity were deliberately **not** made similarity dimensions:
+* A shared artist identity does not imply a shared musical style.
+* Popularity does not measure musical similarity.
 
 ### D) Enforcement in Code
 
@@ -121,6 +128,8 @@ $$\text{score}(q, c) = \sum_{i \in \text{selected}} w_i \cdot s_i(q, c), \qquad 
 | Multi-track groups | **4,748** (13,283 tracks) |
 | Largest group | 45 tracks (*Rockin' Around the Christmas Tree* — Brenda Lee) |
 
+The duplicate analysis report counted **4,657** groups using exact string matching. Normalization raises this to **4,748**, because it also merges case and whitespace variants of the same title.
+
 ### C) Split Sizes
 
 | Split | Tracks | Groups | Track Share | Group Share |
@@ -134,8 +143,10 @@ $$\text{score}(q, c) = \sum_{i \in \text{selected}} w_i \cdot s_i(q, c), \qquad 
 | Metric | Value |
 | :--- | :---: |
 | Genres missing from any split | **0 / 114** |
-| Mean per-genre share deviation | **0.07%** |
+| Mean / median per-genre share deviation | **0.07%** / **0.03%** |
+| Genres deviating more than 0.5% / 1% | 3 / 1 |
 | Max per-genre share deviation | **1.48%** (`dance`) |
+| Smallest genre | `romance` (904 tracks): 633 / 135 / 136 |
 
 Worst-balanced genres:
 
@@ -193,8 +204,9 @@ Full suite: **25 tests passed**.
 
 ### B) Environment
 
-* Python **3.13** virtual environment (`.venv`, not tracked).
-* pandas 3.1.1 · numpy 2.5.4 · scikit-learn 1.9.1 · pytest 9.2.0.
+* Python **3.13** virtual environment (`.venv`, not tracked). The system default, Python 3.15, was avoided because of package wheel availability.
+* pandas 3.1.1 · numpy 2.5.4 · scikit-learn 1.9.1 · scipy 1.18.1 · pytest 9.2.0, plus the project in editable mode.
+* Regenerating the processed data reproduced the earlier reports exactly: 89,740 tracks, 16,299 multi-genre tracks, 1,601 remastered tracks.
 
 ### C) Reproduction
 
@@ -207,7 +219,7 @@ pytest
 
 ### D) Tracked Data Artifacts
 
-The following processed files are now tracked in Git so work can continue on other machines (raw data remains ignored):
+`data/processed/` is no longer ignored, so the processed files are tracked in Git and work can continue on other machines. The raw dataset (`data/raw/dataset.csv`) and the virtual environment remain untracked.
 
 | File | Size | Content |
 | :--- | :---: | :--- |
@@ -222,6 +234,8 @@ The following processed files are now tracked in Git so work can continue on oth
 
 | Step | Activity | Data |
 | :---: | :--- | :--- |
+| — | ~~Finalize feature categorization~~ | — |
+| — | ~~Train / Validation / Test split~~ | — |
 | 0 | Decide on audio-aware group extension (Section 7) and re-run the split if approved | All |
 | 1 | Within-dimension correlation analysis | Train |
 | 2 | Between-dimension correlation analysis | Train |
@@ -231,3 +245,8 @@ The following processed files are now tracked in Git so work can continue on oth
 | 6 | Dimension-score correlation (relative independence of engines) | Validation |
 | 7 | Output deduplication of alternate releases; filters | — |
 | 8 | Final evaluation | Test |
+
+Guiding rules:
+* **No feature is dropped solely because of high correlation.** Results are analyzed first and decided on explicitly.
+* **All data-driven decisions use Train only.** Validation checks design choices; Test stays untouched until final evaluation.
+* **Duplicate versions in the output are removed at inference time.** A post-processing rule, separate from both filters and dimensions, collapses alternate releases of the same song in the top-10.

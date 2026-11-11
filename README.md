@@ -20,10 +20,10 @@ spotify_track_recommender/
 │   └── 01_eda_template.ipynb
 ├── reports/                 # Analysis reports and figures (tracked in Git)
 │   ├── duplicate_track_feature_analysis.md  # Deep dive on title+artist duplicates
-│   ├── feature_architecture_and_split_report.md  # Similarity dimensions & leakage-safe split
 │   ├── feature_importance.md                # RF Gini feature importance ranking
 │   ├── feature_importance.png               # Visual plot of feature importances
-│   └── project_progress_report.md           # Engineering progress & milestone report
+│   ├── project_progress_report.md           # Engineering progress & milestone report
+│   └── similarity_architecture_and_split_report.md  # Similarity dimensions & leakage-safe split
 ├── src/
 │   └── spotify_recommender/
 │       ├── __init__.py
@@ -136,7 +136,7 @@ python -m spotify_recommender.cli inspect
 Detailed technical documentation and analytical reports are tracked in `reports/`:
 
 * **[Duplicate Track Feature Analysis](reports/duplicate_track_feature_analysis.md):** Comprehensive empirical analysis of 13,054 rows across 4,657 identical title + artist groups, multi-album root causes, duration variance distributions, acoustic divergence (live/acoustic/remix), and architectural recommendations against premature record merging.
-* **[Feature Architecture & Split Report](reports/feature_architecture_and_split_report.md):** Multi-aspect recommender goal, V1 similarity dimensions vs. filters/metadata, group-aware multi-label stratified split, verification results, and roadmap.
+* **[Similarity Architecture & Split Report](reports/similarity_architecture_and_split_report.md):** Multi-aspect recommender goal, V1 similarity dimensions vs. filters/metadata, equal-weight score combination, group-aware multi-label stratified split, verification results, and roadmap.
 * **[Engineering Progress Report](reports/project_progress_report.md):** Complete summary of dataset profiling, missing value audits, 3-layer duplicate resolution, domain bounds validation, and feature engineering.
 * **[Feature Importance Analysis](reports/feature_importance.md):** Empirical Gini importance ranking and insights derived from 100 Random Forest decision trees across 114 genres.
 * **[Feature Importance Chart](reports/feature_importance.png):** High-resolution horizontal bar chart visualizing the top discriminators.

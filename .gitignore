@@ -15,9 +15,9 @@ __pycache__/
 build/
 dist/
 
-# Raw dataset (kept local, not in Git)
-data/raw/*
-!data/raw/.gitkeep
+# # Raw dataset (kept local, not in Git)
+# data/raw/*
+# !data/raw/.gitkeep
 
 # Trained models and heavy serialized artifacts (kept local / cloud storage)
 models/*
